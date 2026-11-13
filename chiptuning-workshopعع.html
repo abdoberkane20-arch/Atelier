@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Atelier Chiptuning – Gestion</title>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>try{var tt=localStorage.getItem('chip_theme');if(tt)document.documentElement.dataset.theme=tt}catch(e){}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap">
+<style>
+:root{--bg:#e9eef0;--card:rgba(255,255,255,.93);--ink:#14232b;--mute:#5d6f78;--line:#d0d9de;--acc:#0e6e6e;--acc-ink:#fff;--hd1:#0b4f55;--hd2:#14232b;
+--s0:#5d6f78;--s1:#b26a00;--s2:#0e6e6e;--s3:#2f7d32;--danger:#b3261e;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1417;--card:rgba(24,36,42,.93);--ink:#e6eef1;--mute:#97a9b2;--line:#2b3b43;--acc:#3fb6b0;--acc-ink:#062423;--hd1:#0f3a3f;--hd2:#0a1114;--s0:#97a9b2;--s1:#f0a63a;--s2:#3fb6b0;--s3:#6fcf73;--danger:#ff8a80}}
+:root[data-theme="dark"]{--bg:#0d1417;--card:rgba(24,36,42,.93);--ink:#e6eef1;--mute:#97a9b2;--line:#2b3b43;--acc:#3fb6b0;--acc-ink:#062423;--hd1:#0f3a3f;--hd2:#0a1114;--s0:#97a9b2;--s1:#f0a63a;--s2:#3fb6b0;--s3:#6fcf73;--danger:#ff8a80}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
+*{box-sizing:border-box}
+body{margin:0;color:var(--ink);font:400 16px/1.6 Cairo,system-ui,Arial,sans-serif}
+.bgart{position:fixed;left:0;top:0;width:100%;height:100%;z-index:-1;color:var(--acc);opacity:.16;pointer-events:none}
+main{max-width:720px;margin:0 auto;padding:0 14px 28px}
+header{margin:0 -14px 14px;padding:18px 16px 16px;background:linear-gradient(135deg,var(--hd1),var(--hd2));color:#fff;display:flex;align-items:center;gap:12px;border-radius:0 0 16px 16px}
+header svg{flex:none}
+header h1{font-size:1.3rem;margin:0;line-height:1.2}
+header p{margin:2px 0 0;font-size:.85rem;opacity:.8}
+h2{font-size:1.05rem;margin:0 0 10px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.stats div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:.78rem;color:var(--mute)}
+.stats b{display:block;font-size:1.15rem;color:var(--ink)}
+nav{display:flex;gap:2px;margin-bottom:14px;border-bottom:1px solid var(--line)}
+nav button{flex:1;background:none;border:0;border-bottom:3px solid transparent;padding:10px 1px;font:600 .72rem Cairo,Arial,sans-serif;color:var(--mute);cursor:pointer}
+nav button.on{color:var(--acc);border-bottom-color:var(--acc)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px}
+form,.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+form .w,.g2 .w{grid-column:1/-1}
+label{font-size:.8rem;color:var(--mute);display:block}
+input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.btn{background:var(--acc);color:var(--acc-ink);border:0;border-radius:8px;padding:10px 14px;font:600 .95rem Cairo,Arial,sans-serif;cursor:pointer}
+.btn.ghost{background:none;color:var(--danger);padding:4px 8px;font-size:.85rem}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.chips button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:99px;padding:4px 12px;font:400 .85rem Cairo,Arial,sans-serif;cursor:pointer}
+.chips button.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.car{font-weight:700}
+.sub{color:var(--mute);font-size:.85rem}
+.price{font-weight:700;white-space:nowrap}
+.st{width:auto;font-weight:600;border-width:2px}
+.empty{text-align:center;color:var(--mute);padding:24px 8px}
+.pr{display:grid;grid-template-columns:1fr 110px auto;gap:6px;margin-bottom:6px}
+.bar{height:8px;background:var(--acc);border-radius:4px;margin-top:4px}
+.bar.d{background:var(--danger)}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+td{padding:6px 0;border-top:1px solid var(--line)}td:last-child{text-align:right;font-weight:600}
+hr{border:0;border-top:1px solid var(--line);margin:12px 0}
+a{color:var(--acc)}
+footer{text-align:center;color:var(--mute);font-size:.85rem;padding:18px 0 4px;border-top:1px solid var(--line);margin-top:20px}
+footer b{color:var(--ink)}
+.pdf,.pdf *{background:#fff!important;color:#000!important;border-color:#ccc!important}.pdf .sub{color:#444!important}
+.cl{cursor:pointer}.bd{display:inline-block;border-radius:99px;padding:0 10px;font-size:.8rem;font-weight:600;border:1px solid currentColor}details summary{cursor:pointer;color:var(--acc);font-weight:600}pre{white-space:pre-wrap;font-size:.75rem;background:var(--bg);padding:8px;border-radius:8px;overflow-x:auto}
+@media print{html{background:#fff}.bgart,header,.stats,nav,footer,.noprint{display:none!important}body{color:#000}.card{border:0;background:#fff;color:#000}.sub{color:#444}}
+</style>
+</head>
+<body>
+<svg class="bgart" viewBox="0 0 800 600" preserveAspectRatio="xMidYMax slice" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">
+<path d="M0 560H800"/>
+<path d="M60 520V490Q60 475 80 472L190 460Q230 410 300 400H470Q540 405 590 460L700 472Q740 476 740 500V520Z"/>
+<path d="M240 458Q270 418 310 412H400V458Z"/><path d="M416 412H470Q515 418 545 458H416Z"/>
+<circle cx="220" cy="522" r="40"/><circle cx="220" cy="522" r="16"/><circle cx="580" cy="522" r="40"/><circle cx="580" cy="522" r="16"/>
+<path d="M30 560V300M30 300H120M770 560V300M770 300H680"/>
+<circle cx="640" cy="120" r="44" stroke-width="14" stroke-dasharray="11 11"/><circle cx="640" cy="120" r="34"/><circle cx="640" cy="120" r="12"/>
+<path d="M90 90L190 190"/><circle cx="82" cy="82" r="20"/><path d="M200 200L215 215"/>
+<rect x="330" y="80" width="100" height="100" rx="8"/><rect x="355" y="105" width="50" height="50" rx="4"/>
+<path d="M345 80V60M370 80V60M395 80V60M420 80V60M345 180V200M370 180V200M395 180V200M420 180V200M330 100H310M330 125H310M330 150H310M430 100H450M430 125H450M430 150H450"/>
+</svg>
+<main>
+<header>
+<svg width="52" height="52" viewBox="0 0 52 52" role="img" aria-label="Logo">
+<rect width="52" height="52" rx="12" fill="#3fb6b0"/>
+<g stroke="#062423" stroke-width="2.4" stroke-linecap="round"><path d="M17 8v6M26 8v6M35 8v6M17 38v6M26 38v6M35 38v6M8 17h6M8 26h6M8 35h6M38 17h6M38 26h6M38 35h6"/></g>
+<rect x="14" y="14" width="24" height="24" rx="4" fill="#062423"/>
+<text id="lg" x="26" y="31" text-anchor="middle" font-family="Cairo,Arial,sans-serif" font-weight="700" font-size="12" fill="#3fb6b0">AB</text>
+</svg>
+<div><h1 id="hn">Atelier Chiptuning</h1><p id="hs"></p></div>
+<button id="thb" onclick="togTheme()" aria-label="Changer de thème" style="margin-left:auto;background:rgba(255,255,255,.15);color:#fff;border:0;border-radius:99px;width:40px;height:40px;font-size:1.2rem;cursor:pointer">☾</button>
+</header>
+<div class="stats" id="stats"></div>
+<nav>
+<button id="t-orders" onclick="go('orders')">Commandes</button>
+<button id="t-archive" onclick="go('archive')">Archive</button>
+<button id="t-fin" onclick="go('fin')">Finances</button>
+<button id="t-clients" onclick="go('clients')">Clients</button>
+<button id="t-team" onclick="go('team')">Équipe</button>
+<button id="t-set" onclick="go('set')">Réglages</button>
+</nav>
+
+<section id="v-orders">
+<div class="card">
+<h2>Nouvelle commande</h2>
+<form onsubmit="addOrder(event)">
+<div><label for="n">Nom du client</label><input id="n" list="names" oninput="fillPhone()"></div>
+<div><label for="ph">Téléphone</label><input id="ph" type="tel" inputmode="tel"></div>
+<div><label for="car">Véhicule</label><input id="car" list="cars" oninput="fillPl()" placeholder="Golf 7 2.0 TDI"><div class="sub" id="hint"></div></div>
+<div><label for="pl">Immatriculation</label><input id="pl"></div>
+<div><label for="ecu">ECU / Fichier</label><input id="ecu" placeholder="EDC17C64 – Bench"></div>
+<div><label for="sv">Prestation</label><select id="sv" onchange="fillPrice()"></select></div>
+<div><label for="pr">Prix (DA)</label><input id="pr" type="number" inputmode="numeric" min="0"></div>
+<div><label for="pd">Payé / acompte (DA)</label><input id="pd" type="number" inputmode="numeric" min="0"></div>
+<div><label for="hb">HP avant (Dyno)</label><input id="hb" type="number" inputmode="numeric" min="0"></div>
+<div><label for="ha">HP après (Dyno)</label><input id="ha" type="number" inputmode="numeric" min="0"></div>
+<div><label for="tc">Technicien</label><select id="tc"></select></div>
+<div><label for="pc">Pièces incluses (DA)</label><input id="pc" type="number" inputmode="numeric" min="0"></div>
+<div class="w"><label for="nt">Remarques</label><input id="nt"></div>
+<div class="w" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" type="submit" onclick="goInv=false">Ajouter la commande</button><button class="btn" type="submit" onclick="goInv=true">Ajouter et voir la facture</button></div>
+</form>
+<datalist id="names"></datalist><datalist id="cars"></datalist>
+</div>
+<input id="q1" type="search" placeholder="Rechercher (client, véhicule, plaque, ECU)" oninput="setQ(this.value)" style="margin-bottom:10px">
+<div class="chips" id="chips"></div>
+<div id="list"></div>
+</section>
+
+<section id="v-archive" hidden>
+<div class="g2" style="margin-bottom:10px">
+<input id="q2" type="search" placeholder="Rechercher" oninput="setQ(this.value)">
+<select id="am" onchange="fm=this.value;renderLists()" aria-label="Mois"></select>
+</div>
+<div class="sub" id="asum" style="margin-bottom:10px"></div>
+<div id="alist"></div>
+</section>
+
+<section id="v-fin" hidden>
+<div class="card"><h2>Résultat</h2>
+<div class="chips" id="fchips"></div><select id="ffm" onchange="ff=this.value;renderFin2()" aria-label="Période"></select><div id="res" style="margin-top:8px"></div></div>
+<div class="card"><h2>Revenus par département</h2><div id="dept"></div></div>
+<div class="card"><h2>Évolution mensuelle du bénéfice net</h2><div id="trend"></div></div>
+<div class="card"><h2>Crédits clients (impayés)</h2><div id="cdebt"></div></div>
+<div class="card"><h2>Fournisseurs (dettes)</h2><div id="sbal" class="sub" style="margin-bottom:8px"></div>
+<form onsubmit="addSup(event)" style="grid-template-columns:1fr 1fr auto">
+<input id="sn" placeholder="Nom du fournisseur" required aria-label="Nom du fournisseur"><input id="sph" type="tel" placeholder="Téléphone" aria-label="Téléphone"><button class="btn" type="submit">Ajouter</button></form>
+<form onsubmit="addTx(event)" style="margin-top:10px">
+<div><label for="xs">Fournisseur</label><select id="xs"></select></div>
+<div><label for="xt">Opération</label><select id="xt"><option value="buy">Achat à crédit (dette +)</option><option value="pay">Règlement (dette −)</option></select></div>
+<div><label for="xa">Montant (DA)</label><input id="xa" type="number" inputmode="numeric" min="1" required></div>
+<div><label for="xd">Détail</label><input id="xd" placeholder="ex : turbo, clés vierges"></div>
+<div class="w"><button class="btn" type="submit">Enregistrer l’opération</button></div></form>
+<div id="slist" style="margin-top:10px"></div></div>
+<div class="card"><h2>Dépenses de l’atelier</h2>
+<form onsubmit="addExp(event)">
+<div><label for="ec">Catégorie</label><select id="ec"></select></div>
+<div><label for="ea">Montant (DA)</label><input id="ea" type="number" inputmode="numeric" min="0" required></div>
+<div><label for="edt">Date</label><input id="edt" type="date"></div>
+<div><label for="ed">Description</label><input id="ed" placeholder="ex : WinOLS, café, nettoyage"></div>
+<div class="w"><button class="btn" type="submit">Ajouter la dépense</button></div></form>
+<div id="elist" style="margin-top:10px"></div></div>
+<div class="card"><h2>Services les plus rentables</h2><div id="top"></div></div>
+<div id="fin"></div></section>
+<section id="v-clients" hidden><input id="q3" type="search" placeholder="Rechercher un client ou un véhicule" oninput="setQ(this.value)" style="margin-bottom:10px"><div id="clients"></div></section>
+
+<section id="v-team" hidden>
+<div class="card"><h2>Nouveau technicien</h2>
+<form onsubmit="addTech(event)">
+<div class="w"><label for="tn">Nom complet</label><input id="tn" required></div>
+<div><label for="ts">Spécialité principale</label><select id="ts"><option>Mécanique auto</option><option>Électricité auto</option><option>Programmation ECU / Chiptuning</option><option>Diagnostic</option><option>Carrosserie / peinture</option><option>Climatisation</option><option>Pneumatique</option><option>Polyvalent</option></select></div>
+<div><label for="tph">Téléphone</label><input id="tph" type="tel" inputmode="tel"></div>
+<div><label for="tpm">Mode de paie</label><select id="tpm"><option value="day">Journalier (DA/jour)</option><option value="pct">% de la main d’œuvre</option></select></div>
+<div><label for="trt">Taux (DA ou %)</label><input id="trt" type="number" inputmode="decimal" min="0" required></div>
+<div class="w"><button class="btn" type="submit">Ajouter le technicien</button></div>
+</form></div>
+<div class="chips" id="pchips"></div>
+<div id="team"></div>
+</section>
+
+<section id="v-set" hidden>
+<div class="card">
+<h2>Mon atelier</h2>
+<div class="g2">
+<div class="w"><label for="cn">Nom de l’atelier</label><input id="cn" onchange="setCfg('name',this.value)"></div>
+<div><label for="cp">Téléphone</label><input id="cp" type="tel" onchange="setCfg('ph',this.value)"></div>
+<div><label for="ca">Adresse</label><input id="ca" onchange="setCfg('ad',this.value)"></div>
+<div><label for="cc">Indicatif pays (WhatsApp)</label><input id="cc" inputmode="numeric" placeholder="213" onchange="setCfg('cc',this.value)"></div>
+</div>
+<div class="sub" style="margin-top:6px">Ces informations apparaissent dans l’en-tête et sur les factures.</div>
+</div>
+<div class="card">
+<h2>Tarifs</h2>
+<div id="plist"></div>
+<form onsubmit="addPrice(event)" style="grid-template-columns:1fr 110px auto;margin-top:10px">
+<input id="np" placeholder="Nouvelle prestation" required>
+<input id="npp" type="number" inputmode="numeric" min="0" placeholder="Prix" required>
+<button class="btn" type="submit">Ajouter</button>
+</form>
+</div>
+<div class="card">
+<h2>Synchronisation cloud</h2>
+<div class="sub" style="margin-bottom:8px">Mêmes données sur plusieurs téléphones (Firebase Realtime Database, gratuit). Toute personne qui connaît le code secret peut lire et modifier les données : gardez-le privé.</div>
+<div class="g2">
+<div class="w"><label for="syu">URL de la base Firebase</label><input id="syu" type="url" placeholder="https://xxxx-default-rtdb.firebaseio.com" onchange="setSy('url',this.value)"></div>
+<div class="w"><label for="syc">Code secret de l’atelier (12 caractères ou plus)</label><input id="syc" placeholder="ex : berkane-7k2m9x4p" onchange="setSy('code',this.value)"></div>
+<label class="w" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="sya" style="width:auto" onchange="setSy('auto',this.checked)">Synchronisation automatique</label>
+</div>
+<div class="row" style="margin-top:8px;justify-content:flex-start;flex-wrap:wrap"><button class="btn" onclick="push()">Envoyer</button><button class="btn" id="bpull" onclick="pull()">Récupérer</button></div>
+<div class="sub" id="sm" style="margin-top:6px"></div>
+<details style="margin-top:8px"><summary>Comment configurer ?</summary>
+<ol class="sub"><li>Sur console.firebase.google.com, créez un projet gratuit.</li><li>Build, puis Realtime Database, puis Créer une base.</li><li>Onglet Règles : collez le texte ci-dessous et publiez.</li><li>Copiez l’URL de la base (onglet Données) dans le champ ci-dessus.</li><li>Choisissez un code secret et utilisez le même sur chaque téléphone.</li></ol>
+<pre>{"rules":{"ateliers":{"$code":{".read":true,".write":true}},"verif":{"$id":{".read":true,".write":"!data.exists()"}}}}</pre><div class="sub">Ces règles activent aussi le lien de vérification des factures (lecture par identifiant, création seulement).</div></details>
+</div>
+<div class="card">
+<h2>Sauvegarde</h2>
+<div class="sub" style="margin-bottom:8px">Exportez régulièrement vos données et gardez le texte dans un endroit sûr (notes, WhatsApp, e-mail). Pour restaurer, collez-le ici puis importez.</div>
+<textarea id="bk" rows="4" aria-label="Données de sauvegarde"></textarea>
+<div class="row" style="margin-top:8px;justify-content:flex-start;flex-wrap:wrap">
+<button class="btn" onclick="exp()">Exporter</button>
+<button class="btn" onclick="cp()">Copier</button>
+<button class="btn" id="bimp" onclick="imp()">Importer</button>
+</div>
+<div class="sub" id="msg" style="margin-top:6px"></div>
+</div>
+</section>
+
+<section id="v-inv" hidden>
+<div class="row noprint" style="margin-bottom:10px"><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="pdf()">Télécharger PDF</button><button class="btn" onclick="window.print()">Imprimer</button><button class="btn" onclick="wa(invId,1)">WhatsApp</button></div><button class="btn ghost" style="color:var(--acc)" onclick="go('orders')">Retour</button></div>
+<div class="sub noprint" id="pm" style="margin-bottom:8px"></div>
+<div id="invc"></div>
+</section>
+
+<footer>Créé par <b>Abderrahmene Berkane</b></footer>
+</main>
+
+<script>
+const K='chip_ws_v2';
+const DEF=[['Eco',15000],['Stage 1',30000],['Stage 2',50000],['Stage 3',80000],['Mesure Dyno',5000],['Diagnostic OBD',3000],
+['Lecture / Écriture ECU',10000],['Clonage ECU',25000],['Vidage + synchronisation',20000],['Immo Off',15000],
+['DPF / FAP Off',20000],['EGR Off',15000],['AdBlue / SCR Off',25000],['Sonde O2 Off',8000],['Catalyseur Off',15000],
+['Swirl Flaps Off',10000],['Start & Stop Off',5000],['Speed Limiter Off',5000],['DTC Off (codes défauts)',5000],
+['Pop & Bang',10000],['Launch Control',10000],['Retour origine (Stock)',5000]].map(([n,p])=>({n,p,g:n==='Diagnostic OBD'?'Diagnostic':'Chiptuning / ECU'})).concat([
+['Diagnostic',[['Scanner / lecture codes défauts',3000],['Scanner multimarque complet',5000],['Effacement codes défauts',2000],['Recherche de panne',5000],['Contrôle avant achat',6000],['Test batterie / alternateur / démarreur',2000],['Contrôle freinage',2000],['Contrôle suspension / train roulant',3000],['Contrôle niveaux et fuites',1500]]],
+['Entretien',[['Vidange moteur + filtre à huile',6000],['Filtre à air',2000],['Filtre habitacle',2000],['Filtre à carburant',3500],['Bougies d’allumage',4000],['Bougies de préchauffage',5000],['Liquide de refroidissement',4000],['Purge liquide de frein',3500],['Huile de boîte de vitesses',6000],['Courroie accessoires',6000],['Kit distribution + pompe à eau',25000],['Nettoyage injecteurs',8000],['Nettoyage vanne EGR',8000],['Décalaminage moteur',8000],['Nettoyage FAP',15000],['Recharge climatisation',8000]]],
+['Mécanique auto',[['Plaquettes de frein',6000],['Disques de frein',10000],['Étriers de frein',12000],['Amortisseurs',12000],['Rotules / silentblocs / biellettes',8000],['Roulement de roue',9000],['Cardans',12000],['Embrayage (kit)',25000],['Joint de culasse',45000],['Turbo (remplacement)',35000],['Injecteurs (remplacement)',20000],['Échappement',10000],['Radiateur / durites',10000],['Géométrie / parallélisme',4000],['Montage pneus + équilibrage',3000],['Main d’œuvre mécanique (heure)',2500]]],
+['Électricité auto',[['Batterie (remplacement)',3000],['Alternateur (réparation / remplacement)',10000],['Démarreur (réparation / remplacement)',10000],['Recherche panne électrique',6000],['Réparation faisceau / câblage',8000],['Capteurs (ABS, vilebrequin, etc.)',6000],['Éclairage (phares / feux)',3000],['Verrouillage centralisé / lève-vitres',6000],['Programmation clés / télécommande',10000],['Codage / adaptation modules',8000],['Installation autoradio / caméra',4000],['Réparation calculateur',15000],['Main d’œuvre électricité (heure)',2500]]]
+].flatMap(([g,a])=>a.map(([n,p])=>({n,p,g}))));
+let S={orders:[],prices:DEF.map(x=>({...x})),v:3,cfg:{name:'',ph:'',ad:''}};
+try{const r=localStorage.getItem(K);if(r){const j=JSON.parse(r);if(j&&j.orders&&j.prices)S=j}}catch(e){}
+function fix(){
+  S.cfg=S.cfg||{name:'',ph:'',ad:''};
+  S.team=S.team||[];S.pay=S.pay||[];S.exp=S.exp||[];S.sup=S.sup||[];S.sl=S.sl||[];
+  if(S.v!==4){DEF.forEach(d=>{const e=S.prices.find(p=>p.n===d.n);if(!e)S.prices.push({...d});else if(!e.g)e.g=d.g});S.v=4}
+  S.orders.forEach(o=>{if(o.paid===undefined)o.paid=o.s===3?o.p:0;if(!o.ts)o.ts=o.id});
+}
+fix();
+let SY={url:'',code:'',auto:false};
+try{const r=localStorage.getItem('chip_sync');if(r)SY={...SY,...JSON.parse(r)}}catch(e){}
+let tmr=null;
+const save=()=>{S.upd=Date.now();try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}
+  if(SY.auto&&SY.url&&SY.code.length>=12){clearTimeout(tmr);tmr=setTimeout(push,1500)}};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>Number(n||0).toLocaleString('fr-FR');
+const ST=['Nouveau','En cours','Prêt','Livré'];
+const mk=o=>new Date(o.ts).toISOString().slice(0,7);
+const ml=k=>new Date(k+'-15').toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+const rest=o=>Math.max(0,o.p-o.paid);
+const dt=o=>new Date(o.ts).toLocaleString('fr-FR',{dateStyle:'long',timeStyle:'short'});
+const sum=(a,f)=>a.reduce((t,o)=>t+f(o),0);
+const ini=s=>s.trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase()||'AB';
+let tab='orders',flt=-1,fm='',q='',arm=null,invId=null;
+
+function go(t){tab=t;arm=null;q='';$('#q1').value='';$('#q2').value='';$('#q3').value='';render()}
+function setQ(v){q=v.toLowerCase().trim();renderLists()}
+function setFlt(f){flt=f;renderLists();renderChips()}
+const mt=o=>!q||[o.n,o.car,o.pl,o.ecu,o.ph,o.sv].join(' ').toLowerCase().includes(q);
+
+function addOrder(e){
+  e.preventDefault();
+  const p=+$('#pr').value||0;
+  S.orders.unshift({id:Date.now(),ts:Date.now(),n:$('#n').value.trim(),ph:$('#ph').value.trim(),car:$('#car').value.trim(),
+    pl:$('#pl').value.trim(),ecu:$('#ecu').value.trim(),sv:$('#sv').value,p,paid:+$('#pd').value||0,
+    hb:+$('#hb').value||0,ha:+$('#ha').value||0,t:+$('#tc').value||0,pc:+$('#pc').value||0,g:(S.prices.find(x=>x.n===$('#sv').value)||{}).g||'',nt:$('#nt').value.trim(),s:0,d:new Date().toLocaleDateString('fr-FR')});
+  const nid=S.orders[0].id;save();e.target.reset();fillPrice();render();if(goInv){goInv=false;showInv(nid)}
+}
+function fillPrice(){const p=S.prices.find(x=>x.n===$('#sv').value);$('#pr').value=p?p.p:''}
+function fillPhone(){
+  const n=$('#n').value,o=n?S.orders.find(x=>x.n===n):null;
+  if(o&&!$('#ph').value)$('#ph').value=o.ph;
+  const v=o?vehs(o.n,o.ph):[];
+  $('#cars').innerHTML=v.map(x=>`<option value="${esc(x.car)}">`).join('');
+  $('#hint').textContent=v.length?'Client connu : '+v.map(x=>x.car).join(', '):'';
+}
+function fillPl(){const o=S.orders.find(x=>x.n===$('#n').value&&x.car===$('#car').value);if(o&&!$('#pl').value)$('#pl').value=o.pl}
+function setSt(id,v){const o=S.orders.find(x=>x.id===id);if(!o)return;o.s=+v;
+  if(o.s===3){o.dl=Date.now();o.cm=comm(o)}else{delete o.dl;delete o.cm}
+  if(o.t)autoSt(o.t);save();render()}
+function setPaid(id,v){const o=S.orders.find(x=>x.id===id);if(o){o.paid=+v||0;save();render()}}
+function del(k,id){const a=k+id;if(arm!==a){arm=a;render();return}arm=null;
+  if(k==='o')S.orders=S.orders.filter(x=>x.id!==id);else if(k==='t')S.team=S.team.filter(x=>x.id!==id);else if(k==='e')S.exp=S.exp.filter(x=>x.id!==id);else if(k==='s'){S.sup=S.sup.filter(x=>x.id!==id);S.sl=S.sl.filter(x=>x.s!==id)}else if(k==='l')S.sl=S.sl.filter(x=>x.id!==id);else S.prices.splice(id,1);save();render()}
+function addPrice(e){e.preventDefault();S.prices.push({n:$('#np').value.trim(),p:+$('#npp').value||0});save();e.target.reset();render()}
+function setPrice(i,k,v){S.prices[i][k]=k==='p'?(+v||0):v;save();renderSelect()}
+function setCfg(k,v){S.cfg[k]=v.trim();save();render()}
+function showInv(id){invId=id;tab='inv';render();scrollTo(0,0)}
+function pdf(){
+  const o=S.orders.find(x=>x.id===invId),el=$('#invc');if(!o)return;
+  const pm=$('#pm');
+  if(!window.html2pdf){pm.textContent='La bibliothèque PDF n’est pas chargée (vérifiez la connexion). Utilisez Imprimer puis Enregistrer au format PDF.';return}
+  pm.textContent='Création du PDF…';scrollTo(0,0);
+  el.classList.add('pdf');
+  html2pdf().set({margin:10,filename:'Facture-'+String(o.id).slice(-6)+'.pdf',image:{type:'jpeg',quality:.98},html2canvas:{scale:2,scrollY:0,useCORS:true},jsPDF:{unit:'mm',format:'a4'}}).from(el).save().then(()=>{el.classList.remove('pdf');pm.textContent='PDF prêt : vérifiez vos téléchargements.'},e=>{el.classList.remove('pdf');pm.textContent='Échec de création du PDF. Utilisez Imprimer.'});
+}
+let pf='w',goInv=false;
+const day=t=>{const d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const pS=()=>{if(pf==='a')return 0;const d=new Date();if(pf==='m')return new Date(d.getFullYear(),d.getMonth(),1).getTime();const w=new Date(d.getFullYear(),d.getMonth(),d.getDate());w.setDate(w.getDate()-((w.getDay()+6)%7));return w.getTime()};
+const topts=sel=>'<option value="">—</option>'+S.team.map(t=>`<option value="${t.id}"${t.id===sel?' selected':''}>${esc(t.n)}</option>`).join('');
+function comm(o){const t=S.team.find(x=>x.id===o.t);return t&&t.pm==='pct'?Math.round(Math.max(0,o.p-(o.pc||0))*t.rt/100):0}
+function autoSt(id){const t=S.team.find(x=>x.id===id);if(t)t.st=S.orders.some(o=>o.t===id&&o.s===1)?'busy':'free'}
+function setTech(id,v){const o=S.orders.find(x=>x.id===id);if(!o)return;const old=o.t;o.t=+v||0;if(o.s===3)o.cm=comm(o);if(old)autoSt(old);if(o.t)autoSt(o.t);save();render()}
+function addTech(e){e.preventDefault();S.team.push({id:Date.now(),n:$('#tn').value.trim(),sp:$('#ts').value,ph:$('#tph').value.trim(),pm:$('#tpm').value,rt:+$('#trt').value||0,st:'free',days:[]});save();e.target.reset();render()}
+function togSt(id){const t=S.team.find(x=>x.id===id);if(t){t.st=t.st==='busy'?'free':'busy';save();render()}}
+function pointer(id){const t=S.team.find(x=>x.id===id),d=day(Date.now());if(!t)return;t.days=t.days||[];const i=t.days.indexOf(d);if(i<0)t.days.push(d);else t.days.splice(i,1);save();render()}
+function versE(id,a){S.pay.push({t:id,a,ts:Date.now()});save();render()}
+function setPf(f){pf=f;render()}
+function qrDraw(o,txt){const el=$('#qr');if(!el||!window.QRCode)return;
+  el.innerHTML='';try{new QRCode(el,{text:txt||['FAC-'+String(o.id).slice(-6),S.cfg.name||'Atelier',o.n,o.car,o.p+' DA','paye '+o.paid,new Date(o.ts).toLocaleDateString('fr-FR')].join('|'),width:txt?160:128,height:txt?160:128,correctLevel:QRCode.CorrectLevel.L})}catch(e){}}
+const hs=s=>{let h=0;for(let k=0;k<s.length;k++)h=(h*31+s.charCodeAt(k))|0;return h};
+const invRec=o=>({n:'FAC-'+new Date(o.ts).getFullYear()+'-'+String(o.id).slice(-6),s:S.cfg.name||'Atelier',c:o.n||'',v:o.car||'',pl:o.pl||'',sv:o.sv||'',p:o.p,pd:o.paid,ts:o.ts});
+const vurl=vk=>location.origin+location.pathname+'?v='+encodeURIComponent(SY.url.replace(/^https?:[/][/]/,'').replace(/[/]+$/,''))+'&i='+vk;
+async function pubInv(o){
+  const h=String(hs(JSON.stringify(invRec(o))));
+  if(o.vk&&o.vh===h)return o.vk;
+  const a=new Uint8Array(12);crypto.getRandomValues(a);
+  const vk=Array.from(a,b=>(b%36).toString(36)).join('');
+  const r=await fetch(SY.url.replace(/[/]+$/,'')+'/verif/'+vk+'.json',{method:'PUT',body:JSON.stringify(invRec(o))});
+  if(!r.ok)throw 0;o.vk=vk;o.vh=h;save();return vk;
+}
+function mkQR(o){
+  const el=$('#qr'),vl=$('#vl');if(!el)return;
+  const ready=SY.url&&o.vk&&o.vh===String(hs(JSON.stringify(invRec(o))));
+  if(ready){qrDraw(o,vurl(o.vk));vl.innerHTML='<a href="'+vurl(o.vk)+'">Lien de vérification</a>';return}
+  qrDraw(o);
+  if(!SY.url){vl.textContent='Activez la synchronisation cloud (Réglages) pour ajouter un lien de vérification.';return}
+  vl.textContent='Création du lien de vérification…';
+  pubInv(o).then(()=>{if(tab==='inv'&&invId===o.id)mkQR(o)}).catch(()=>{vl.textContent='Lien de vérification indisponible (vérifiez Firebase et ses règles).'});
+}
+function renderTech(){
+  const c=$('#tc').value;
+  $('#tc').innerHTML='<option value="">Aucun</option>'+S.team.map(t=>`<option value="${t.id}"${String(t.id)===c?' selected':''}>${esc(t.n)} (${esc(t.sp)}) – ${t.st==='busy'?'Occupé':'Disponible'}</option>`).join('');
+  $('#pchips').innerHTML=[['Cette semaine','w'],['Ce mois','m'],['Tout','a']].map(([l,v])=>`<button class="${pf===v?'on':''}" onclick="setPf('${v}')">${l}</button>`).join('');
+  const a=pS();
+  $('#team').innerHTML=S.team.length?S.team.map(t=>{
+    const L=S.orders.filter(o=>o.t===t.id&&o.s===3&&(o.dl||o.ts)>=a);
+    const ca=sum(L,o=>o.p),cm=sum(L,o=>o.cm||0),dz=(t.days||[]).filter(d=>d>=day(a)).length;
+    const due=t.pm==='pct'?cm:dz*t.rt,paid=sum(S.pay.filter(x=>x.t===t.id&&x.ts>=a),x=>x.a),net=Math.max(0,due-paid);
+    const open=S.orders.filter(o=>o.t===t.id&&o.s<3).length;
+    return `<div class="card"><div class="row"><div><div class="car">${esc(t.n)}</div><div class="sub">${esc(t.sp)}${t.ph?' – <a href="tel:'+esc(t.ph)+'">'+esc(t.ph)+'</a>':''}</div>
+    <div class="sub">${t.pm==='pct'?t.rt+' % de la main d’œuvre':fmt(t.rt)+' DA / jour'}</div></div>
+    <div style="text-align:right"><span class="bd" style="color:var(--${t.st==='busy'?'s1':'s3'})">${t.st==='busy'?'Occupé':'Disponible'}</span><div class="sub">${open} en cours</div></div></div>
+    <table style="margin-top:8px"><tr><td>Voitures livrées</td><td>${L.length}</td></tr>
+    <tr><td>Chiffre apporté</td><td>${fmt(ca)} DA</td></tr>
+    ${t.pm==='pct'?`<tr><td>Commissions</td><td>${fmt(cm)} DA</td></tr>`:`<tr><td>Jours de présence</td><td>${dz}</td></tr>`}
+    <tr><td>Déjà versé</td><td>${fmt(paid)} DA</td></tr>
+    <tr><td>Reste à payer</td><td style="color:var(--danger)">${fmt(net)} DA</td></tr></table>
+    <div class="row" style="margin-top:8px;flex-wrap:wrap;justify-content:flex-start">
+    <button class="btn" onclick="togSt(${t.id})">${t.st==='busy'?'Marquer disponible':'Marquer occupé'}</button>
+    ${t.pm==='day'?`<button class="btn" onclick="pointer(${t.id})">${(t.days||[]).includes(day(Date.now()))?'Présent ✓':'Présent aujourd’hui'}</button>`:''}
+    ${net?`<button class="btn" onclick="versE(${t.id},${net})">Verser ${fmt(net)} DA</button>`:''}
+    <button class="btn ghost" onclick="del('t',${t.id})">${arm==='t'+t.id?'Confirmer ?':'Supprimer'}</button></div></div>`}).join('')
+    :'<div class="empty">Ajoutez votre premier technicien avec le formulaire ci-dessus.</div>';
+}
+const isDark=()=>{const t=document.documentElement.dataset.theme;return t?t==='dark':matchMedia('(prefers-color-scheme:dark)').matches};
+function togTheme(){const t=isDark()?'light':'dark';document.documentElement.dataset.theme=t;try{localStorage.setItem('chip_theme',t)}catch(e){}$('#thb').textContent=t==='dark'?'☀':'☾'}
+const waNum=p=>{const d=(p||'').replace(/[^0-9]/g,'');if(!d)return '';if(d.startsWith('00'))return d.slice(2);const cc=(S.cfg.cc||'213').replace(/[^0-9]/g,'');if(d.startsWith('0'))return cc+d.slice(1);return d.startsWith(cc)?d:cc+d};
+function wa(id,f){
+  const o=S.orders.find(x=>x.id===id);if(!o)return;
+  const r=rest(o),car=o.car||'votre véhicule';
+  const T=['nous avons bien reçu votre véhicule '+car+'.','les travaux sur votre véhicule '+car+' sont en cours.','votre véhicule '+car+' est prêt. Vous pouvez venir le récupérer à l’atelier.','merci de votre confiance pour votre véhicule '+car+'.'];
+  let m='Bonjour '+(o.n?o.n+', ':'')+T[o.s];
+  if(o.s>=2&&r)m+=' Reste à payer : '+fmt(r)+' DA.';
+  if(o.vk&&SY.url&&(o.s>=2||f))m+=' Votre facture : '+vurl(o.vk);
+  m+=' – '+(S.cfg.name||'Atelier')+(S.cfg.ph?' ('+S.cfg.ph+')':'');
+  window.open('https://wa.me/'+waNum(o.ph)+'?text='+encodeURIComponent(m),'_blank');
+}
+let fp='m',ff=day(Date.now()).slice(0,7);
+const eC=['Abonnements logiciels (WinOLS / OLSx)','Serveurs / Internet','Outils / équipement','Café / consommables','Nettoyage de l’atelier','Loyer','Électricité / eau','Transport','Publicité','Autres'];
+const DN={'Chiptuning / ECU':'Programmation (Chiptuning / ECU)','Mécanique auto':'Mécanique','Électricité auto':'Électricité','Entretien':'Entretien','Diagnostic':'Diagnostic'};
+const dn=g=>DN[g]||g;
+const grp=o=>{if(o.g)return o.g;const p=S.prices.find(x=>x.n===o.sv);return(p&&p.g)||'Autres'};
+const pk=x=>fp==='d'?day(x.ts):fp==='y'?day(x.ts).slice(0,4):fp==='m'?day(x.ts).slice(0,7):'';
+const ck=()=>({d:day(Date.now()),m:day(Date.now()).slice(0,7),y:day(Date.now()).slice(0,4),a:''})[fp];
+const plab=k=>fp==='d'?new Date(k+'T12:00:00').toLocaleDateString('fr-FR',{dateStyle:'long'}):fp==='m'?ml(k):k;
+function setFp(p){fp=p;ff=ck();renderFin2()}
+function addExp(e){e.preventDefault();const dv=$('#edt').value,ts=dv?new Date(dv+'T12:00:00').getTime():Date.now();
+  S.exp.unshift({id:Date.now(),ts,c:$('#ec').value,d:$('#ed').value.trim(),a:+$('#ea').value||0});save();e.target.reset();render()}
+function dupExp(id){const x=S.exp.find(y=>y.id===id);if(!x)return;S.exp.unshift({id:Date.now(),ts:Date.now(),c:x.c,d:x.d,a:x.a});save();render()}
+function addSup(e){e.preventDefault();S.sup.push({id:Date.now(),n:$('#sn').value.trim(),ph:$('#sph').value.trim()});save();e.target.reset();render()}
+function addTx(e){e.preventDefault();const s=+$('#xs').value;if(!s)return;
+  S.sl.unshift({id:Date.now(),s,ty:$('#xt').value,a:+$('#xa').value||0,d:$('#xd').value.trim(),ts:Date.now()});save();e.target.reset();render()}
+const supBal=s=>{const L=S.sl.filter(x=>x.s===s.id);return sum(L.filter(x=>x.ty==='buy'),x=>x.a)-sum(L.filter(x=>x.ty==='pay'),x=>x.a)};
+function payAll(id){const s=S.sup.find(x=>x.id===id);if(!s)return;const b=supBal(s);if(b<=0)return;
+  S.sl.unshift({id:Date.now(),s:id,ty:'pay',a:b,d:'Solde',ts:Date.now()});save();render()}
+function waDebt(k){
+  const i=k.indexOf('|'),n=k.slice(0,i),ph=k.slice(i+1);
+  const L=S.orders.filter(o=>o.n===n&&o.ph===ph&&rest(o)>0);if(!L.length)return;
+  const m='Bonjour '+(n?n+', ':'')+'petit rappel : il reste '+fmt(sum(L,rest))+' DA à régler pour '+L.map(o=>o.car||'votre véhicule').join(', ')+'. Merci de passer à l’atelier quand vous pouvez. – '+(S.cfg.name||'Atelier')+(S.cfg.ph?' ('+S.cfg.ph+')':'');
+  window.open('https://wa.me/'+waNum(ph)+'?text='+encodeURIComponent(m),'_blank');
+}
+function renderSup(){
+  const cur=$('#xs').value;
+  $('#xs').innerHTML=S.sup.map(s=>`<option value="${s.id}"${String(s.id)===cur?' selected':''}>${esc(s.n)}</option>`).join('');
+  $('#sbal').innerHTML='Total dû aux fournisseurs : <b style="color:var(--danger)">'+fmt(sum(S.sup,s=>Math.max(0,supBal(s))))+' DA</b>';
+  $('#slist').innerHTML=S.sup.length?S.sup.map(s=>{
+    const b=supBal(s),L=S.sl.filter(x=>x.s===s.id).sort((x,y)=>y.ts-x.ts);
+    return `<div style="border-top:1px solid var(--line);padding:8px 0"><div class="row"><div><div class="car">${esc(s.n)}</div><div class="sub">${s.ph?'<a href="tel:'+esc(s.ph)+'">'+esc(s.ph)+'</a>':''}</div></div>
+    <div style="text-align:right"><div class="price" style="color:var(--${b>0?'danger':'s3'})">${fmt(Math.abs(b))} DA</div><div class="sub">${b>0?'Nous devons':b<0?'Avance payée':'À jour'}</div></div></div>
+    <details><summary>Historique (${L.length})</summary>${L.map(x=>`<div class="row" style="padding:4px 0"><div class="sub">${new Date(x.ts).toLocaleDateString('fr-FR')} – ${x.ty==='buy'?'Achat à crédit':'Règlement'}${x.d?' – '+esc(x.d):''}</div><div class="sub"><b>${x.ty==='buy'?'+':'−'}${fmt(x.a)} DA</b> <button class="btn ghost" onclick="del('l',${x.id})">${arm==='l'+x.id?'Confirmer ?':'×'}</button></div></div>`).join('')||'<div class="sub">Aucune opération.</div>'}</details>
+    <div class="row" style="justify-content:flex-start;margin-top:4px">${b>0?`<button class="btn" onclick="payAll(${s.id})">Solder ${fmt(b)} DA</button>`:''}<button class="btn ghost" onclick="del('s',${s.id})">${arm==='s'+s.id?'Confirmer ?':'Supprimer'}</button></div></div>`}).join('')
+    :'<div class="sub">Ajoutez un fournisseur (magasin de pièces, vendeur de clés, etc.) avec le formulaire ci-dessus.</div>';
+}
+function renderFin2(){
+  if(!$('#ec').options.length)$('#ec').innerHTML=eC.map(c=>`<option>${esc(c)}</option>`).join('');
+  if(!$('#edt').value)$('#edt').value=day(Date.now());
+  $('#fchips').innerHTML=[['Jour','d'],['Mois','m'],['Année','y'],['Tout','a']].map(([l,v])=>`<button class="${fp===v?'on':''}" onclick="setFp('${v}')">${l}</button>`).join('');
+  const all=[...S.orders,...S.exp,...S.pay];
+  const ks=[...new Set(all.map(pk).concat(fp==='a'?[]:[ck()]))].sort().reverse();
+  if(fp!=='a'&&!ks.includes(ff))ff=ks[0]||ck();
+  $('#ffm').hidden=fp==='a';
+  $('#ffm').innerHTML=ks.map(k=>`<option value="${k}"${k===ff?' selected':''}>${plab(k)}</option>`).join('');
+  const f=a=>a.filter(x=>fp==='a'||pk(x)===ff);
+  const O=f(S.orders),E=f(S.exp),Pa=f(S.pay);
+  const rev=sum(O,o=>o.paid),pc=sum(O,o=>o.pc||0),sal=sum(Pa,x=>x.a),dep=sum(E,x=>x.a),net=rev-pc-sal-dep;
+  $('#res').innerHTML=`<table><tr><td>Total facturé</td><td>${fmt(sum(O,o=>o.p))} DA</td></tr><tr><td>Revenus encaissés</td><td>${fmt(rev)} DA</td></tr><tr><td>Coût des pièces</td><td>− ${fmt(pc)} DA</td></tr><tr><td>Salaires et commissions versés</td><td>− ${fmt(sal)} DA</td></tr><tr><td>Dépenses de l’atelier</td><td>− ${fmt(dep)} DA</td></tr><tr><td><b>Bénéfice net</b></td><td style="color:var(--${net<0?'danger':'s3'})">${fmt(net)} DA</td></tr></table><div class="sub" style="margin-top:6px">Marge nette : ${rev?Math.round(net/rev*100):0} %</div>`;
+  const D={};O.forEach(o=>{const g=grp(o);(D[g]=D[g]||{c:0,r:0,t:0,pc:0}).c++;D[g].r+=o.paid;D[g].t+=o.p;D[g].pc+=o.pc||0});
+  const DT=Object.entries(D).sort((a,b)=>b[1].r-a[1].r),dmx=DT.length?Math.max(1,DT[0][1].r):1;
+  $('#dept').innerHTML=DT.length?DT.map(([g,v])=>`<div style="margin-bottom:10px"><div class="row"><span>${esc(dn(g))}</span><span class="price">${fmt(v.r)} DA</span></div><div class="sub">${v.c} commande${v.c>1?'s':''} – facturé ${fmt(v.t)} DA${v.pc?' – pièces '+fmt(v.pc)+' DA':''} – ${rev?Math.round(v.r/rev*100):0} % des encaissements</div><div class="bar" style="width:${Math.round(v.r/dmx*100)||1}%"></div></div>`).join(''):'<div class="sub">Aucune donnée pour cette période.</div>';
+  const mk2=x=>day(x.ts).slice(0,7);
+  const M=[...new Set(all.map(mk2))].sort().map(k=>{const o=S.orders.filter(x=>mk2(x)===k);
+    const r=sum(o,x=>x.paid),n=r-sum(o,x=>x.pc||0)-sum(S.pay.filter(x=>mk2(x)===k),x=>x.a)-sum(S.exp.filter(x=>mk2(x)===k),x=>x.a);return{k,r,n}});
+  const nmx=Math.max(1,...M.map(m=>Math.abs(m.n)));
+  $('#trend').innerHTML=M.length?(M.length>1?`<div class="sub" style="margin-bottom:10px">Tendance : <b style="color:var(--${M[M.length-1].n>=M[M.length-2].n?'s3':'danger'})">${M[M.length-1].n>=M[M.length-2].n?'▲ en hausse':'▼ en baisse'}</b> (le mois en cours n’est pas terminé)</div>`:'')
+    +M.slice(-6).reverse().map(m=>{const i=M.indexOf(m),pv=i>0?M[i-1]:null,d=pv?m.n-pv.n:0,pct=pv&&pv.n?Math.round(Math.abs(d)/Math.abs(pv.n)*100):null;
+    return `<div style="margin-bottom:10px"><div class="row"><b>${ml(m.k)}</b><span class="price" style="color:var(--${m.n<0?'danger':'s3'})">${fmt(m.n)} DA</span></div><div class="sub">Encaissé ${fmt(m.r)} DA${pv?' – '+(d>=0?'▲ ':'▼ ')+fmt(Math.abs(d))+' DA vs mois précédent'+(pct!==null?' ('+(d>=0?'+':'−')+pct+' %)':''):''}</div><div class="bar${m.n<0?' d':''}" style="width:${Math.max(1,Math.round(Math.abs(m.n)/nmx*100))}%"></div></div>`}).join('')
+    :'<div class="sub">Pas encore de données.</div>';
+  $('#elist').innerHTML=E.length?[...E].sort((a,b)=>b.ts-a.ts).map(x=>`<div class="row" style="border-top:1px solid var(--line);padding:6px 0"><div><div class="car">${esc(x.c)}</div><div class="sub">${esc(x.d)}${x.d?' – ':''}${new Date(x.ts).toLocaleDateString('fr-FR',{dateStyle:'long'})}</div></div><div style="text-align:right"><div class="price">${fmt(x.a)} DA</div><button class="btn ghost" style="color:var(--acc)" onclick="dupExp(${x.id})">Répéter</button><button class="btn ghost" onclick="del('e',${x.id})">${arm==='e'+x.id?'Confirmer ?':'Supprimer'}</button></div></div>`).join(''):'<div class="sub">Aucune dépense enregistrée pour cette période.</div>';
+  const CD={};S.orders.filter(o=>rest(o)>0).forEach(o=>{const k=o.n+'|'+o.ph;const c=(CD[k]=CD[k]||{n:o.n,ph:o.ph,r:0,c:0,ts:o.ts});c.r+=rest(o);c.c++;c.ts=Math.min(c.ts,o.ts)});
+  const CL=Object.values(CD).sort((a,b)=>b.r-a.r);
+  $('#cdebt').innerHTML=CL.length?`<div class="sub" style="margin-bottom:8px">Total à encaisser : <b style="color:var(--danger)">${fmt(sum(CL,c=>c.r))} DA</b> – ${CL.length} client(s)</div>`+CL.map(c=>`<div style="border-top:1px solid var(--line);padding:8px 0"><div class="row"><div><div class="car">${esc(c.n)||'Client non renseigné'}</div><div class="sub">${c.ph?'<a href="tel:'+esc(c.ph)+'">'+esc(c.ph)+'</a> – ':''}${c.c} commande${c.c>1?'s':''} – depuis ${Math.floor((Date.now()-c.ts)/864e5)} jour(s)</div></div><div style="text-align:right"><div class="price" style="color:var(--danger)">${fmt(c.r)} DA</div>${c.ph?`<button class="btn ghost" style="color:var(--s3)" data-k="${esc(c.n+'|'+c.ph)}" onclick="waDebt(this.dataset.k)">Rappel WhatsApp</button>`:''}</div></div></div>`).join(''):'<div class="sub">Aucun client avec un solde impayé.</div>';
+  renderSup();
+  const SV={};O.forEach(o=>{const k=o.sv||'—';(SV[k]=SV[k]||{c:0,t:0}).c++;SV[k].t+=o.p});
+  const T=Object.entries(SV).sort((a,b)=>b[1].t-a[1].t),tot=sum(T,x=>x[1].t),mx=T.length?T[0][1].t:1;
+  const bc=Object.entries(SV).sort((a,b)=>b[1].c-a[1].c)[0];
+  $('#top').innerHTML=T.length?`<div class="sub" style="margin-bottom:10px">Plus demandée : <b>${esc(bc[0])}</b> (${bc[1].c} fois)</div>`+T.slice(0,8).map(([n,v],i)=>`<div style="margin-bottom:10px"><div class="row"><span>${i+1}. ${esc(n)}</span><span class="price">${fmt(v.t)} DA</span></div><div class="sub">${v.c} commande${v.c>1?'s':''} – ${tot?Math.round(v.t/tot*100):0} % du chiffre d’affaires</div><div class="bar" style="width:${Math.round(v.t/mx*100)||1}%"></div></div>`).join(''):'<div class="sub">Aucune donnée pour cette période.</div>';
+}
+let selC=null;
+function selClient(k){selC=selC===k?null:k;render()}
+function newFor(k){const i=k.indexOf('|');go('orders');$('#n').value=k.slice(0,i);$('#ph').value=k.slice(i+1);fillPhone();scrollTo(0,0)}
+const vehs=(n,ph)=>{const m={};S.orders.filter(o=>o.n===n&&o.ph===ph).forEach(o=>{const k=(o.car+'|'+o.pl).toLowerCase();(m[k]=m[k]||{car:o.car,pl:o.pl,c:0}).c++});return Object.values(m)};
+const cf=c=>!q||[c.n,c.ph,...vehs(c.n,c.ph).map(v=>v.car+' '+v.pl)].join(' ').toLowerCase().includes(q);
+function clHist(c){
+  const L=S.orders.filter(o=>o.n===c.n&&o.ph===c.ph);
+  return `<hr><b>Véhicules</b>`+vehs(c.n,c.ph).map(v=>`<div class="sub">• ${esc(v.car)}${v.pl?' – '+esc(v.pl):''} (${v.c} visite${v.c>1?'s':''})</div>`).join('')
+  +`<hr><b>Historique</b>`+L.map(o=>`<div class="sub" style="margin-top:6px">${dt(o)}<br>${esc(o.car)} – ${esc(o.sv)} – ${fmt(o.p)} DA – ${ST[o.s]}${rest(o)?' – <span style="color:var(--danger)">reste '+fmt(rest(o))+' DA</span>':''}</div>`).join('')
+  +`<div style="margin-top:10px"><button class="btn" data-k="${esc(c.n+'|'+c.ph)}" onclick="event.stopPropagation();newFor(this.dataset.k)">Nouvelle commande</button></div>`;
+}
+
+function exp(){$('#bk').value=JSON.stringify(S);$('#msg').textContent='Données exportées : '+S.orders.length+' commande(s). Appuyez sur Copier.'}
+function cp(){const t=$('#bk');if(!t.value)exp();t.select();try{navigator.clipboard.writeText(t.value);$('#msg').textContent='Copié.'}catch(e){try{document.execCommand('copy');$('#msg').textContent='Copié.'}catch(x){$('#msg').textContent='Copiez le texte manuellement.'}}}
+function imp(){
+  if(arm!=='imp'){arm='imp';render();$('#msg').textContent='Cela remplace toutes les données actuelles. Appuyez à nouveau pour confirmer.';return}
+  arm=null;
+  try{const j=JSON.parse($('#bk').value);
+    if(j&&Array.isArray(j.orders)&&Array.isArray(j.prices)){S=j;fix();save();initCfg();render();$('#msg').textContent='Données importées.'}
+    else{render();$('#msg').textContent='Format invalide.'}
+  }catch(e){render();$('#msg').textContent='Texte invalide : collez une sauvegarde exportée.'}
+}
+function initCfg(){$('#cn').value=S.cfg.name||'';$('#cp').value=S.cfg.ph||'';$('#ca').value=S.cfg.ad||'';$('#cc').value=S.cfg.cc||'213';$('#syu').value=SY.url;$('#syc').value=SY.code;$('#sya').checked=!!SY.auto}
+const sm=t=>{$('#sm').textContent=t};
+function setSy(k,v){SY[k]=typeof v==='string'?v.trim():v;try{localStorage.setItem('chip_sync',JSON.stringify(SY))}catch(e){}}
+const syUrl=()=>SY.url.replace(/[/]+$/,'')+'/ateliers/'+encodeURIComponent(SY.code)+'.json';
+const syOk=()=>{if(SY.url&&SY.code.length>=12)return true;sm('Renseignez l’URL Firebase et un code d’au moins 12 caractères.');return false};
+async function push(){
+  if(!syOk())return;sm('Envoi…');
+  try{const r=await fetch(syUrl(),{method:'PUT',body:JSON.stringify(S)});if(!r.ok)throw 0;sm('Envoyé à '+new Date().toLocaleTimeString('fr-FR',{timeStyle:'short'})+'.')}
+  catch(e){sm('Échec de l’envoi. Vérifiez l’URL, le code et les règles Firebase.')}
+}
+async function pull(auto){
+  if(!syOk())return;
+  if(!auto&&arm!=='pull'){arm='pull';render();sm('Cela remplace les données de ce téléphone. Appuyez à nouveau pour confirmer.');return}
+  arm=null;sm('Récupération…');
+  try{const r=await fetch(syUrl());if(!r.ok)throw 0;const j=await r.json();
+    if(!j||!j.upd){render();sm('Aucune donnée dans le cloud. Utilisez Envoyer.');return}
+    if(auto===true&&j.upd<=(S.upd||0)){sm('Déjà à jour.');return}
+    S=j;fix();try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}initCfg();render();sm('Données récupérées.')}
+  catch(e){render();sm('Échec de la récupération.')}
+}
+
+function renderSelect(){
+  const cur=$('#sv').value;
+  const G={};S.prices.forEach(p=>(G[p.g||'Autres']=G[p.g||'Autres']||[]).push(p));
+  $('#sv').innerHTML=Object.entries(G).map(([g,a])=>`<optgroup label="${esc(g)}">${a.map(p=>`<option>${esc(p.n)}</option>`).join('')}</optgroup>`).join('');
+  if(S.prices.some(p=>p.n===cur))$('#sv').value=cur;
+  if(!$('#pr').value)fillPrice();
+}
+function renderChips(){
+  $('#chips').innerHTML=[['Toutes',-1],...ST.slice(0,3).map((s,i)=>[s,i])].map(([l,v])=>`<button class="${flt===v?'on':''}" onclick="setFlt(${v})">${l}</button>`).join('');
+}
+function card(o){
+  const r=rest(o);
+  return `<div class="card">
+  <div class="row"><div><div class="car">${esc(o.car)||'Véhicule non renseigné'}${o.pl?' – '+esc(o.pl):''}</div>
+  <div class="sub">${esc(o.n)||'Client non renseigné'}${o.ph?' – <a href="tel:'+esc(o.ph)+'">'+esc(o.ph)+'</a>':''}</div></div>
+  <div style="text-align:right"><div class="price">${fmt(o.p)} DA</div>${r?`<div class="sub" style="color:var(--danger)">Reste ${fmt(r)} DA</div>`:'<div class="sub" style="color:var(--s3)">Payé</div>'}</div></div>
+  <div class="sub">${esc(o.sv)}${o.ecu?' – '+esc(o.ecu):''}${o.pc?' – pièces '+fmt(o.pc)+' DA':''}</div>
+  <div class="sub">Technicien : <select style="width:auto;padding:3px 6px" onchange="setTech(${o.id},this.value)" aria-label="Technicien">${topts(o.t)}</select>${o.cm?' – commission '+fmt(o.cm)+' DA':''}</div>
+  ${o.hb||o.ha?`<div class="sub">Dyno : ${o.hb||'?'} → ${o.ha||'?'} HP${o.hb&&o.ha?' (+'+(o.ha-o.hb)+')':''}</div>`:''}
+  ${o.nt?'<div class="sub">'+esc(o.nt)+'</div>':''}
+  <div class="row" style="align-items:center;margin-top:8px;flex-wrap:wrap">
+  <select class="st" style="color:var(--s${o.s});border-color:var(--s${o.s})" onchange="setSt(${o.id},this.value)" aria-label="Statut">${ST.map((s,i)=>`<option value="${i}"${i===o.s?' selected':''}>${s}</option>`).join('')}</select>
+  <label style="display:flex;gap:6px;align-items:center">Payé<input type="number" inputmode="numeric" style="width:100px" value="${o.paid}" onchange="setPaid(${o.id},this.value)"></label>
+  <span class="sub">${dt(o)}</span></div>
+  <div class="row" style="margin-top:6px"><button class="btn ghost" style="color:var(--acc)" onclick="showInv(${o.id})">Facture</button><button class="btn ghost" style="color:var(--s3)" onclick="wa(${o.id})">WhatsApp</button>
+  <button class="btn ghost" onclick="del('o',${o.id})">${arm==='o'+o.id?'Confirmer ?':'Supprimer'}</button></div></div>`;
+}
+function renderLists(){
+  const L=S.orders.filter(o=>o.s<3&&(flt<0||o.s===flt)&&mt(o));
+  $('#list').innerHTML=L.length?L.map(card).join(''):'<div class="empty">Aucune commande ici. Ajoutez la première avec le formulaire ci-dessus.</div>';
+  const A=S.orders.filter(o=>o.s===3&&mt(o)&&(!fm||mk(o)===fm));
+  $('#asum').textContent=A.length+' commande(s) livrée(s) – '+fmt(sum(A,o=>o.paid))+' DA encaissés';
+  $('#alist').innerHTML=A.length?A.map(card).join(''):'<div class="empty">Les commandes livrées sont archivées ici automatiquement.</div>';
+}
+
+function render(){
+  const nm=S.cfg.name||'Atelier Chiptuning';
+  $('#hn').textContent=nm;$('#hs').textContent=[S.cfg.ph,S.cfg.ad].filter(Boolean).join(' – ');
+  $('#lg').textContent=S.cfg.name?ini(S.cfg.name):'AB';
+  document.title=nm+' – Gestion';
+  const cm=new Date().toISOString().slice(0,7);
+  $('#stats').innerHTML=`<div><b>${S.orders.filter(o=>o.s<3).length}</b>Commandes ouvertes</div><div><b>${fmt(sum(S.orders,rest))}</b>Reste à encaisser (DA)</div><div><b>${fmt(sum(S.orders.filter(o=>mk(o)===cm),o=>o.paid))}</b>Encaissé ce mois (DA)</div>`;
+  for(const t of ['orders','archive','fin','clients','team','set','inv']){
+    const b=$('#t-'+t);if(b)b.className=t===tab?'on':'';$('#v-'+t).hidden=t!==tab;
+  }
+  renderSelect();renderChips();renderTech();renderFin2();$('#thb').textContent=isDark()?'☀':'☾';
+  $('#names').innerHTML=[...new Set(S.orders.map(o=>o.n))].map(n=>`<option value="${esc(n)}">`).join('');
+  const ms=[...new Set(S.orders.map(mk))].sort().reverse();
+  $('#am').innerHTML='<option value="">Tous les mois</option>'+ms.map(k=>`<option value="${k}"${k===fm?' selected':''}>${ml(k)}</option>`).join('');
+  renderLists();
+
+  const mx=Math.max(1,...ms.map(k=>sum(S.orders.filter(o=>mk(o)===k),o=>o.paid)));
+  const SV={};S.orders.forEach(o=>{(SV[o.sv]=SV[o.sv]||{c:0,t:0}).c++;SV[o.sv].t+=o.p});
+  $('#fin').innerHTML=S.orders.length?`<div class="card"><h2>Total</h2><table>
+    <tr><td>Encaissé</td><td>${fmt(sum(S.orders,o=>o.paid))} DA</td></tr>
+    <tr><td>Reste à encaisser</td><td style="color:var(--danger)">${fmt(sum(S.orders,rest))} DA</td></tr>
+    <tr><td>Commandes</td><td>${S.orders.length}</td></tr></table></div>
+    <div class="card"><h2>Par mois</h2>${ms.map(k=>{const a=S.orders.filter(o=>mk(o)===k),p=sum(a,o=>o.paid),r=sum(a,rest);
+      return `<div style="margin-bottom:12px"><div class="row"><b>${ml(k)}</b><span class="price">${fmt(p)} DA</span></div>
+      <div class="sub">${a.length} commande(s)${r?' – reste '+fmt(r)+' DA':''}</div><div class="bar" style="width:${Math.round(p/mx*100)}%"></div></div>`}).join('')}</div>
+    <div class="card" hidden><h2>Par prestation</h2><table>${Object.entries(SV).sort((a,b)=>b[1].t-a[1].t).map(([n,v])=>`<tr><td>${esc(n)} <span class="sub">× ${v.c}</span></td><td>${fmt(v.t)} DA</td></tr>`).join('')}</table></div>`
+    :'<div class="empty">Les statistiques apparaissent après la première commande.</div>';
+
+  const C={};
+  S.orders.forEach(o=>{const k=o.n+'|'+o.ph;(C[k]=C[k]||{n:o.n,ph:o.ph,c:0,t:0,r:0,car:o.car}).c++;C[k].t+=o.paid;C[k].r+=rest(o)});
+  const CL=Object.values(C);
+  $('#clients').innerHTML=CL.length?CL.filter(cf).map(c=>`<div class="card cl" data-k="${esc(c.n+'|'+c.ph)}" onclick="selClient(this.dataset.k)"><div class="row"><div><div class="car">${esc(c.n)||'Client non renseigné'}</div>
+    <div class="sub">${c.ph?'<a href="tel:'+esc(c.ph)+'">'+esc(c.ph)+'</a> – ':''}${vehs(c.n,c.ph).length} véhicule(s) – dernier : ${esc(c.car)}</div></div>
+    <div style="text-align:right"><div class="price">${fmt(c.t)} DA</div><div class="sub">${c.c} commande${c.c>1?'s':''}</div>${c.r?`<div class="sub" style="color:var(--danger)">Doit ${fmt(c.r)} DA</div>`:''}</div></div>${selC===c.n+'|'+c.ph?clHist(c):''}</div>`).join('')
+    :'<div class="empty">Les clients apparaissent ici automatiquement après l’ajout de commandes.</div>';
+
+  $('#plist').innerHTML=S.prices.map((p,i)=>`<div class="pr">
+    <input value="${esc(p.n)}" onchange="setPrice(${i},'n',this.value)" aria-label="Nom de la prestation">
+    <input type="number" inputmode="numeric" value="${p.p}" onchange="setPrice(${i},'p',this.value)" aria-label="Prix">
+    <button class="btn ghost" onclick="del('p',${i})">${arm==='p'+i?'Confirmer ?':'Supprimer'}</button></div>`).join('');
+  $('#bimp').textContent=arm==='imp'?'Confirmer l’import':'Importer';
+  $('#bpull').textContent=arm==='pull'?'Confirmer la récupération':'Récupérer';
+
+  const o=S.orders.find(x=>x.id===invId);
+  $('#invc').innerHTML=o?`<div class="card"><div class="row"><div><h2>${esc(nm)}</h2><div class="sub">${esc(S.cfg.ad)}${S.cfg.ad&&S.cfg.ph?'<br>':''}${esc(S.cfg.ph)}</div></div>
+    <div class="sub" style="text-align:right"><b>Facture N° FAC-${new Date(o.ts).getFullYear()}-${String(o.id).slice(-6)}</b><br><b>${rest(o)?'NON SOLDÉE':'PAYÉE'}</b><br>${dt(o)}</div></div><hr>
+    <table><tr><td>Client</td><td>${esc(o.n)}${o.ph?' – '+esc(o.ph):''}</td></tr>
+    <tr><td>Véhicule</td><td>${esc(o.car)}${o.pl?' – '+esc(o.pl):''}</td></tr>
+    <tr><td>ECU / Fichier</td><td>${esc(o.ecu)}</td></tr>
+    <tr><td>Prestation</td><td>${esc(o.sv)}</td></tr>
+    <tr><td>Puissance (Dyno)</td><td>${o.hb||o.ha?(o.hb||'?')+' → '+(o.ha||'?')+' HP':''}</td></tr>
+    <tr><td>Dont pièces</td><td>${o.pc?fmt(o.pc)+' DA':''}</td></tr><tr><td>Total</td><td>${fmt(o.p)} DA</td></tr><tr><td>Payé</td><td>${fmt(o.paid)} DA</td></tr>
+    <tr><td>Reste à payer</td><td>${fmt(rest(o))} DA</td></tr></table>
+    <p class="sub" style="margin-top:14px">Merci pour votre confiance.</p><div id="qr" style="display:inline-block;background:#fff;padding:6px;border-radius:6px;margin-top:6px"></div><div id="vl" class="sub noprint"></div></div>`:'';
+  if(o)mkQR(o);
+}
+async function verify(v,i){
+  const ok=/^[a-z0-9.-]+[.](firebaseio[.]com|firebasedatabase[.]app)$/i.test(v)&&/^[A-Za-z0-9]{10,40}$/.test(i);
+  document.querySelector('main').innerHTML='<header><div><h1>Vérification de facture</h1></div></header><div class="card" id="vr">Vérification en cours…</div>';
+  let r=null;
+  if(ok)try{const x=await fetch('https://'+v+'/verif/'+i+'.json');if(x.ok)r=await x.json()}catch(e){}
+  $('#vr').innerHTML=r&&r.n?`<h2 style="color:var(--s3)">✓ Facture enregistrée</h2><table>
+    <tr><td>N°</td><td>${esc(r.n)}</td></tr><tr><td>Atelier</td><td>${esc(r.s)}</td></tr><tr><td>Client</td><td>${esc(r.c)}</td></tr>
+    <tr><td>Véhicule</td><td>${esc(r.v)}${r.pl?' – '+esc(r.pl):''}</td></tr><tr><td>Prestation</td><td>${esc(r.sv)}</td></tr>
+    <tr><td>Total</td><td>${fmt(r.p)} DA</td></tr><tr><td>Payé à l’émission</td><td>${fmt(r.pd)} DA</td></tr>
+    <tr><td>Date</td><td>${dt(r)}</td></tr></table><p class="sub">Données enregistrées par l’atelier au moment de l’émission. Source : ${esc(v)}</p>`
+    :'<h2 style="color:var(--danger)">Facture introuvable</h2><p class="sub">Aucune facture ne correspond à ce lien.</p>';
+}
+const P=new URLSearchParams(location.search);
+if(P.get('i')&&P.get('v'))verify(P.get('v'),P.get('i'));
+else{initCfg();render();if(SY.auto&&SY.url&&SY.code.length>=12)pull(true)}
+</script>
+</body>
+</html>
