@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connexion – Atelier Chiptuning</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d1417;--card:#17242a;--ink:#e6eef1;--mute:#97a9b2;--line:#2b3b43;--acc:#3fb6b0;--acc-ink:#062423;--ok:#6fcf73;--warn:#e0a030;--bad:#ef7d74;color-scheme:dark}
+@media (prefers-color-scheme:light){:root{--bg:#eef3f4;--card:#fff;--ink:#14262b;--mute:#587079;--line:#d3dfe2;--acc:#0e6e6e;--acc-ink:#fff;--ok:#2f7d32;--warn:#9a5d00;--bad:#b3261e;color-scheme:light}}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 Cairo,system-ui,sans-serif;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+main{max-width:460px;margin:0 auto;padding:28px 16px}
+main.wide{max-width:880px}
+h1{font-size:1.5rem;margin:0 0 4px}
+h2{font-size:1.1rem;margin:0 0 8px}
+.sub{color:var(--mute);font-size:.9rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-top:16px}
+label{display:block;font-size:.9rem;margin:12px 0 4px}
+input{width:100%;padding:11px 12px;border-radius:8px;border:1px solid var(--line);background:transparent;color:inherit;font:inherit}
+input:focus-visible,button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--acc);background:var(--acc);color:var(--acc-ink);padding:10px 14px;font-weight:600}
+button.ghost{background:transparent;color:var(--acc)}
+button.small{padding:5px 9px;font-size:.82rem}
+button:disabled{opacity:.55;cursor:wait}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row.between{justify-content:space-between}
+.msg{min-height:1.4em;margin-top:12px;font-size:.92rem}
+.msg.err{color:var(--bad)}.msg.ok{color:var(--ok)}
+.links{margin-top:14px;display:flex;gap:16px;flex-wrap:wrap}
+.links button{background:none;border:0;padding:0;color:var(--acc);font-weight:400;text-decoration:underline}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+th,td{text-align:start;padding:9px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.badge{font-size:.8rem;font-weight:600}
+.badge.on{color:var(--ok)}.badge.off{color:var(--bad)}.badge.wait{color:var(--warn)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:16px}
+.tab{background:transparent;color:var(--ink);border-color:var(--line)}
+.tab.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-top:16px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.stat b{display:block;font-size:1.3rem}
+select{padding:9px 10px;border-radius:8px;border:1px solid var(--line);background:transparent;color:inherit;font:inherit}
+select option{color:#000}
+#pvbar{position:fixed;top:0;left:0;right:0;z-index:10;background:var(--warn);color:#000;padding:calc(8px + env(safe-area-inset-top,0)) 14px 8px;display:flex;gap:10px;align-items:center;justify-content:space-between;font-size:.9rem}
+#pvbar button{background:#000;color:#fff;border-color:#000;padding:6px 10px}
+body.pv main{padding-top:72px}
+body.pv #f-login,body.pv #v-wait .row{pointer-events:none;opacity:.75}
+#frame{width:100%;height:75vh;border:1px solid var(--line);border-radius:8px;background:#fff;margin-top:12px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div id="pvbar" hidden><span>Aperçu administrateur : ce que voit un abonné</span><button type="button" onclick="endPreview()">Retour à l’administration</button></div>
+<main id="m">
+
+<!-- Chargement -->
+<section id="v-load"><p class="sub">Chargement…</p></section>
+
+<!-- Connexion -->
+<section id="v-login" hidden>
+  <h1>Atelier Chiptuning</h1>
+  <p class="sub">Connectez-vous pour ouvrir votre espace de gestion.</p>
+  <form class="card" id="f-login" novalidate>
+    <label for="em">E-mail</label>
+    <input id="em" type="email" autocomplete="username" inputmode="email" required>
+    <label for="pw">Mot de passe</label>
+    <input id="pw" type="password" autocomplete="current-password" minlength="8" required>
+    <div class="row" style="margin-top:16px">
+      <button type="submit" id="b-in">Se connecter</button>
+      <button type="button" class="ghost" id="b-up">Créer un compte</button>
+    </div>
+    <div class="msg" id="lm" role="status" aria-live="polite"></div>
+    <div class="links"><button type="button" id="b-reset">Mot de passe oublié</button></div>
+  </form>
+</section>
+
+<!-- Compte en attente / expiré / e-mail non vérifié -->
+<section id="v-wait" hidden>
+  <h1 id="wt"></h1>
+  <div class="card">
+    <p id="wp" style="margin-top:0"></p>
+    <div class="row">
+      <button type="button" id="b-refresh">Vérifier à nouveau</button>
+      <button type="button" class="ghost" id="b-resend" hidden>Renvoyer l’e-mail</button>
+      <button type="button" class="ghost" data-out>Se déconnecter</button>
+    </div>
+    <div class="msg" id="wm" role="status" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- Espace administrateur -->
+<section id="v-admin" hidden>
+  <div class="row between">
+    <div><h1>Administration</h1><div class="sub" id="ae"></div></div>
+    <button type="button" class="ghost" data-out>Se déconnecter</button>
+  </div>
+  <div class="tabs" role="tablist">
+    <button type="button" class="tab on" id="tb-subs" role="tab" aria-selected="true" onclick="showTab('subs')">Comptes et abonnements</button>
+    <button type="button" class="tab" id="tb-site" role="tab" aria-selected="false" onclick="showTab('site')">Aperçu du site</button>
+  </div>
+
+  <div id="t-subs">
+    <div class="stats" id="stats"></div>
+    <div class="card">
+      <div class="row between">
+        <h2 style="margin:0">Comptes</h2>
+        <div class="row">
+          <input id="aq" type="search" placeholder="Chercher un e-mail" aria-label="Chercher un e-mail" style="width:200px">
+          <select id="af" aria-label="Filtrer par statut">
+            <option value="">Tous</option><option value="on">Actifs</option><option value="wait">En attente</option><option value="off">Expirés</option>
+          </select>
+          <button type="button" class="ghost" id="b-reload">Actualiser</button>
+        </div>
+      </div>
+      <div class="msg" id="am" role="status" aria-live="polite"></div>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>E-mail</th><th>Statut</th><th>Expire le</th><th>Note</th><th>Actions</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <p class="sub" style="margin-bottom:0">Pour supprimer définitivement un compte : Firebase Console, Authentication. Désactiver un abonnement bloque déjà l’accès.</p>
+    </div>
+  </div>
+
+  <div id="t-site" hidden>
+    <div class="card">
+      <h2>Voir le site comme un abonné</h2>
+      <p class="sub" style="margin-top:0">Le cadre ci-dessous montre le site tel qu’un abonné actif le voit. Les boutons affichent les écrans que voit un abonné sans accès.</p>
+      <div class="row">
+        <button type="button" class="ghost small" onclick="preview('login')">Écran de connexion</button>
+        <button type="button" class="ghost small" onclick="preview('wait')">Compte en attente</button>
+        <button type="button" class="ghost small" onclick="preview('expired')">Abonnement expiré</button>
+        <button type="button" class="ghost small" onclick="reloadFrame()">Recharger le site</button>
+        <button type="button" class="ghost small" onclick="window.open(APP_URL,'_blank','noopener')">Nouvel onglet</button>
+      </div>
+      <iframe id="frame" title="Aperçu du site"></iframe>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+setTimeout(function(){
+  if(window.__fbReady)return;
+  var l=document.getElementById("v-load");
+  if(l&&!l.hidden)l.innerHTML='<h1>Firebase non chargé</h1><div class="card"><p style="margin-top:0">Le script Firebase n’a pas pu se charger. Causes possibles :</p><p class="sub">1. Vous êtes dans l’aperçu de Claude : téléchargez le fichier et ouvrez-le dans Chrome.<br>2. Pas de connexion internet.<br>3. Le fichier est ouvert depuis un dossier du téléphone : hébergez-le (Firebase Hosting, Netlify...) ou ouvrez-le avec un serveur local.</p></div>';
+},5000);
+</script>
+<script type="module">
+window.__fbReady=true;
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+  sendPasswordResetEmail, sendEmailVerification, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, query, orderBy,
+  serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* ===== Configuration Firebase (projet atelierprodz) ===== */
+const firebaseConfig = {
+  apiKey: "AIzaSyCiohsPFMAYiViKgfbLAOOok-BmnncPt1o",
+  authDomain: "atelierprodz.firebaseapp.com",
+  databaseURL: "https://atelierprodz-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "atelierprodz",
+  storageBucket: "atelierprodz.firebasestorage.app",
+  messagingSenderId: "736297956086",
+  appId: "1:736297956086:web:b302c5719e92970ecc32d7"
+};
+const ADMIN_EMAIL = "atelietprodz@gmail.com";
+const APP_URL = "chiptuning-workshop.html";   // page ouverte pour un abonné actif
+/* ================================================================================================= */
+
+const $ = s => document.querySelector(s);
+const app = initializeApp(firebaseConfig), auth = getAuth(app), db = getFirestore(app);
+const isAdmin = u => !!u && (u.email || "").toLowerCase() === ADMIN_EMAIL.toLowerCase();
+const fmtDate = ts => ts ? ts.toDate().toLocaleDateString("fr-FR") : "—";
+const setMsg = (el, t, k = "") => { el.textContent = t; el.className = "msg " + k; };
+const show = id => {
+  for (const v of ["load", "login", "wait", "admin"]) $("#v-" + v).hidden = v !== id;
+  $("#m").classList.toggle("wide", id === "admin");
+};
+
+const ERR = {
+  "auth/invalid-credential": "E-mail ou mot de passe incorrect.",
+  "auth/invalid-email": "Adresse e-mail invalide.",
+  "auth/email-already-in-use": "Un compte existe déjà avec cet e-mail. Connectez-vous.",
+  "auth/weak-password": "Mot de passe trop court : 8 caractères minimum.",
+  "auth/too-many-requests": "Trop de tentatives. Réessayez dans quelques minutes.",
+  "auth/invalid-api-key": "Clé Firebase invalide : vérifiez firebaseConfig.",
+  "auth/network-request-failed": "Pas de connexion internet.",
+  "permission-denied": "Accès refusé par les règles de sécurité Firestore."
+};
+const errText = e => ERR[e && e.code] || "Une erreur est survenue : " + ((e && e.code) || e);
+
+/* ---------- Connexion / inscription ---------- */
+const creds = () => ({ email: $("#em").value.trim(), pw: $("#pw").value });
+async function run(btn, fn) {
+  btn.disabled = true;
+  try { await fn(); } catch (e) { setMsg($("#lm"), errText(e), "err"); }
+  btn.disabled = false;
+}
+$("#f-login").addEventListener("submit", ev => {
+  ev.preventDefault();
+  const { email, pw } = creds();
+  if (!email || !pw) return setMsg($("#lm"), "Saisissez votre e-mail et votre mot de passe.", "err");
+  run($("#b-in"), () => signInWithEmailAndPassword(auth, email, pw));
+});
+$("#b-up").addEventListener("click", () => {
+  const { email, pw } = creds();
+  if (!email || pw.length < 8) return setMsg($("#lm"), "Saisissez un e-mail et un mot de passe de 8 caractères minimum.", "err");
+  run($("#b-up"), async () => {
+    const c = await createUserWithEmailAndPassword(auth, email, pw);
+    sendEmailVerification(c.user).catch(() => {});
+  });
+});
+$("#b-reset").addEventListener("click", async () => {
+  const { email } = creds();
+  if (!email) return setMsg($("#lm"), "Saisissez d’abord votre e-mail.", "err");
+  try { await sendPasswordResetEmail(auth, email); setMsg($("#lm"), "Si ce compte existe, un e-mail de réinitialisation a été envoyé.", "ok"); }
+  catch (e) { setMsg($("#lm"), errText(e), "err"); }
+});
+document.querySelectorAll("[data-out]").forEach(b => b.addEventListener("click", () => signOut(auth)));
+
+/* ---------- Écran d'attente ---------- */
+function wait(title, text, canResend) {
+  $("#wt").textContent = title; $("#wp").textContent = text;
+  $("#b-resend").hidden = !canResend; setMsg($("#wm"), "");
+  show("wait");
+}
+$("#b-refresh").addEventListener("click", async () => {
+  if (auth.currentUser) { await auth.currentUser.reload(); route(auth.currentUser); }
+});
+$("#b-resend").addEventListener("click", async () => {
+  try { await sendEmailVerification(auth.currentUser); setMsg($("#wm"), "E-mail de vérification envoyé.", "ok"); }
+  catch (e) { setMsg($("#wm"), errText(e), "err"); }
+});
+
+/* ---------- Aiguillage selon le rôle ---------- */
+async function route(user) {
+  if (!user) { show("login"); return; }
+  show("load");
+  try {
+    if (isAdmin(user)) {
+      // L'e-mail admin doit être vérifié : sinon n'importe qui pourrait s'inscrire avec cette adresse.
+      if (!user.emailVerified) {
+        return wait("Vérifiez votre e-mail", "Ouvrez le message de vérification envoyé à " + user.email + ", puis appuyez sur « Vérifier à nouveau ».", true);
+      }
+      $("#ae").textContent = user.email;
+      show("admin"); await loadSubs(); return;
+    }
+    // Abonné : lire (ou créer) sa fiche d'abonnement
+    const ref = doc(db, "subscriptions", user.uid);
+    let snap = await getDoc(ref);
+    if (!snap.exists()) {
+      await setDoc(ref, { email: user.email, active: false, expiresAt: null, createdAt: serverTimestamp() });
+      snap = await getDoc(ref);
+    }
+    const d = snap.data();
+    const exp = d.expiresAt && d.expiresAt.toMillis();
+    if (d.active === true && exp && exp > Date.now()) { location.replace(APP_URL); return; }
+    if (d.active === true && exp) {
+      return wait("Abonnement expiré", "Votre abonnement a expiré le " + fmtDate(d.expiresAt) + ". Contactez l’administrateur pour le renouveler.", false);
+    }
+    wait("Compte en attente d’activation", "Votre compte est créé. Il sera activé dès la confirmation de votre paiement par l’administrateur.", false);
+  } catch (e) { wait("Erreur", errText(e), false); }
+}
+const configured = !/COLLEZ_ICI|VOTRE-PROJET/.test(JSON.stringify(firebaseConfig));
+if (configured) onAuthStateChanged(auth, route);
+else {
+  show("login");
+  setMsg($("#lm"), "Firebase n’est pas configuré : collez votre firebaseConfig au début du script de ce fichier.", "err");
+  document.querySelectorAll("#f-login button").forEach(b => b.disabled = true);
+}
+
+/* ---------- Administration ---------- */
+let subs = [];
+async function loadSubs() {
+  setMsg($("#am"), "Chargement…");
+  try {
+    const qs = await getDocs(query(collection(db, "subscriptions"), orderBy("createdAt", "desc")));
+    subs = qs.docs.map(d => ({ id: d.id, ...d.data() }));
+    setMsg($("#am"), "");
+    drawSubs();
+  } catch (e) { setMsg($("#am"), errText(e), "err"); }
+}
+function status(s) {
+  const exp = s.expiresAt && s.expiresAt.toMillis();
+  if (s.active && exp && exp > Date.now()) return ["Actif", "on"];
+  if (s.active && exp) return ["Expiré", "off"];
+  return ["En attente", "wait"];
+}
+function btn(label, cls, fn) {
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "small " + cls; b.textContent = label; b.addEventListener("click", fn); return b;
+}
+function drawStats() {
+  const c = { on: 0, wait: 0, off: 0 };
+  subs.forEach(s => c[status(s)[1]]++);
+  $("#stats").replaceChildren(...[["Comptes", subs.length], ["Actifs", c.on], ["En attente", c.wait], ["Expirés", c.off]].map(([l, n]) => {
+    const d = document.createElement("div"); d.className = "stat";
+    const b = document.createElement("b"); b.textContent = n; d.append(b, l); return d;
+  }));
+}
+function drawSubs() {
+  drawStats();
+  const q = $("#aq").value.trim().toLowerCase(), f = $("#af").value, tb = $("#rows");
+  tb.replaceChildren();
+  const list = subs.filter(x => (!q || (x.email || "").toLowerCase().includes(q)) && (!f || status(x)[1] === f));
+  if (!list.length) { const tr = tb.insertRow(), c = tr.insertCell(); c.colSpan = 5; c.textContent = "Aucun compte."; c.className = "sub"; return; }
+  for (const s of list) {
+    const tr = document.createElement("tr"), [lab, cls] = status(s);
+    const td = () => tr.appendChild(document.createElement("td"));
+    td().textContent = s.email || s.id;
+    const st = document.createElement("span"); st.className = "badge " + cls; st.textContent = lab; td().appendChild(st);
+    td().textContent = fmtDate(s.expiresAt);
+    const note = document.createElement("input"); note.value = s.note || ""; note.placeholder = "ex : payé CCP"; note.maxLength = 120;
+    note.setAttribute("aria-label", "Note pour " + (s.email || s.id)); note.style.width = "150px";
+    note.addEventListener("change", () => patch(s, { note: note.value.trim() }, true)); td().appendChild(note);
+    const act = td(), box = document.createElement("div"); box.className = "row"; act.appendChild(box);
+    box.append(
+      btn("+30 jours", "", () => extend(s, 30)),
+      btn("+1 an", "ghost", () => extend(s, 365)),
+      btn("Désactiver", "ghost", () => patch(s, { active: false })),
+      btn("Réinit. mot de passe", "ghost", () => resetPw(s))
+    );
+    const dt = document.createElement("input"); dt.type = "date"; dt.setAttribute("aria-label", "Date exacte d’expiration"); dt.style.width = "150px";
+    dt.addEventListener("change", () => { if (dt.value) patch(s, { active: true, expiresAt: Timestamp.fromDate(new Date(dt.value + "T23:59:59")) }); });
+    box.appendChild(dt);
+    tb.appendChild(tr);
+  }
+}
+async function resetPw(s) {
+  try { await sendPasswordResetEmail(auth, s.email); setMsg($("#am"), "E-mail de réinitialisation envoyé à " + s.email + ".", "ok"); }
+  catch (e) { setMsg($("#am"), errText(e), "err"); }
+}
+$("#aq").addEventListener("input", drawSubs);
+$("#af").addEventListener("change", drawSubs);
+$("#b-reload").addEventListener("click", loadSubs);
+function extend(s, days) {
+  const cur = s.expiresAt ? s.expiresAt.toMillis() : 0;
+  const base = Math.max(Date.now(), cur);
+  patch(s, { active: true, expiresAt: Timestamp.fromMillis(base + days * 864e5) });
+}
+async function patch(s, data, quiet) {
+  try { await updateDoc(doc(db, "subscriptions", s.id), data); Object.assign(s, data); if (!quiet) drawSubs(); setMsg($("#am"), "Enregistré.", "ok"); }
+  catch (e) { setMsg($("#am"), errText(e), "err"); }
+}
+
+/* ---------- Onglets et aperçu « comme un abonné » ---------- */
+window.APP_URL = APP_URL;
+window.showTab = n => {
+  $("#t-subs").hidden = n !== "subs"; $("#t-site").hidden = n !== "site";
+  for (const k of ["subs", "site"]) { const t = $("#tb-" + k); t.classList.toggle("on", k === n); t.setAttribute("aria-selected", k === n); }
+  const fr = $("#frame"); if (n === "site" && !fr.dataset.loaded) { fr.src = APP_URL; fr.dataset.loaded = "1"; }
+};
+window.reloadFrame = () => { const fr = $("#frame"); fr.src = APP_URL; fr.dataset.loaded = "1"; };
+window.preview = kind => {
+  document.body.classList.add("pv"); $("#pvbar").hidden = false;
+  if (kind === "login") { setMsg($("#lm"), ""); show("login"); }
+  else if (kind === "wait") wait("Compte en attente d’activation", "Votre compte est créé. Il sera activé dès la confirmation de votre paiement par l’administrateur.", false);
+  else wait("Abonnement expiré", "Votre abonnement a expiré le " + new Date().toLocaleDateString("fr-FR") + ". Contactez l’administrateur pour le renouveler.", false);
+};
+window.endPreview = () => { document.body.classList.remove("pv"); $("#pvbar").hidden = true; show("admin"); showTab("site"); };
+</script>
+</body>
+</html>
